@@ -3,7 +3,6 @@ import express from "express"
 import {
   signUpUser,
   signInUser,
-  googleSignUpAndSignIn,
   resetPasswordWithEmail,
   signout,
 } from "../controllers/authController.js"
@@ -18,9 +17,6 @@ router.post("/signup", signUpUser)
 // Route for user sign-in
 // Public route that generates a Firebase ID token for authenticated users
 router.post("/signin", signInUser)
-
-//Route for user signup/ signin using google
-router.post("/google", googleSignUpAndSignIn)
 
 // Route for reset password
 router.post("/resetpassword", resetPasswordWithEmail)
