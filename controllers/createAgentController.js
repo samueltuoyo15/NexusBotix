@@ -1,7 +1,7 @@
 //import pdfParse from "pdf-parse";
 import admin from "firebase-admin";
 import multer from "multer";
-import { chromium } from "playwright";
+//import { chromium } from "playwright";
 const db = admin.firestore();
 
 //handle uploading of files and save them to the cloud 
@@ -30,18 +30,17 @@ const createAgent = async (req, res) => {
    }
     
     //Handling Links of the request incase Incase the request sends a link instead 
-    if (link) {
-      const browser = await chromium.launch({ headless: true }); 
-      const page = await browser.newPage();
-      await page.goto(link); 
-      extractedContent = await page.textContent("body"); 
-      await browser.close(); 
-    }
+ //   if (link) {
+//      const browser = await chromium.launch({ headless: true }); 
+//      const page = await browser.newPage();
+//      await page.goto(link); 
+//      extractedContent = await page.textContent("body"); 
+//      await browser.close(); 
+  //  }
     
     // Handle file Extraction 
     //if(req.file){
-      const pdfData = pdfParse(req.file.buffer);
-      extractedContent = pdfData.text;
+ //     const pdfData = pdfParse(req.file.buffer);      extractedContent = pdfData.text;
    // }
     
       // Save extracted text to Firestore
