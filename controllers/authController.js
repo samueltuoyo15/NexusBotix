@@ -7,14 +7,15 @@ import {
   signOut,
 } from "../firebase/firebaseClient.js" // Correct import
 
+import { db, authAdmin } from "../firebase/firebaseAdmin.js"
+
 // Controller to sign up a new user
 const signUpUser = async (req, res) => {
-  const { email, password } = req.body // Extract email and password from request body
-  if (!email || !password) {
-    return res.status(422).json({
-      email: "Email is required",
-      password: "Password is required",
-    })
+  const { email, password, name } = req.body // Extract email and password from request body
+  if (!email || !password || !name) {
+    return res
+      .status(422)
+      .json({ message: "Email, password, and name are required." })
   }
   try {
     // Create a new user
@@ -24,12 +25,36 @@ const signUpUser = async (req, res) => {
       password,
     )
 
+    const authID = userCredential.user.uid
     // send email verification link to user email
-    await sendEmailVerification(userCredential.user)
+    try {
+      await sendEmailVerification(userCredential.user)
+    } catch (verificationError) {
+      console.log(verificationError)
+      return res.status(500).json({
+        message: verificationError.message,
+      })
+    }
+    // create a object containing the user details that will be saved
+    const userDetails = {
+      email,
+      name,
+      role: "free",
+      createdAt: new Date(),
+      lastLogin: new Date(),
+      imageUrl: "",
+    }
+
+    const userRef = db.collection("Users").doc(authID)
+    await userRef.set(userDetails)
+
+    // creating custom claims
+    await authAdmin.setCustomUserClaims(authID, { role: "free" })
 
     res.status(201).json({
-      message: "Verification email has been sent. User created successfully",
-      uid: userCredential.user.uid,
+      message:
+        "Verification email has been sent. User created successfully. Please verify your email",
+      userDetails,
     })
   } catch (error) {
     console.error("Error signing up user:", error)
@@ -43,10 +68,7 @@ const signUpUser = async (req, res) => {
 const signInUser = async (req, res) => {
   const { email, password } = req.body // Extract email and password from request body
   if (!email || !password) {
-    return res.status(422).json({
-      email: "Email is required",
-      password: "Password is required",
-    })
+    return res.status(422).json({ message: "Email and password are required." })
   }
 
   try {
@@ -63,7 +85,13 @@ const signInUser = async (req, res) => {
       })
     }
 
-    const token = await userCredential.user.getIdToken() // Generate ID token
+    const token = await userCredential.user.getIdToken(true) // Generate ID token
+    const decodedToken = await authAdmin.verifyIdToken(token)
+    const customClaims = decodedToken.role
+
+    console.log(customClaims)
+    console.log(decodedToken)
+
     res.status(200).json({
       message: "User signed in successfully",
       token,
